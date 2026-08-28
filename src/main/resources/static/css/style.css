@@ -1,0 +1,78 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.hero-section {
+    background: linear-gradient(
+        135deg,
+        #212529,
+        #343a40
+    );
+
+    color: white;
+    padding: 100px 20px;
+}
+
+.hero-section h1 {
+    letter-spacing: -1px;
+}
+
+.card {
+    border: none;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+footer {
+    margin-top: 40px;
+}
+
+.status-timeline {
+    position: relative;
+    padding-left: 10px;
+}
+
+.status-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    position: relative;
+    padding-bottom: 35px;
+}
+
+.status-step:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 35px;
+    width: 2px;
+    height: calc(100% - 15px);
+    background-color: #dee2e6;
+}
+
+.status-step.completed:not(:last-child)::after {
+    background-color: #198754;
+}
+
+.status-icon {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+}
+
+.status-step.completed .status-icon {
+    background-color: #198754;
+    color: white;
+}
