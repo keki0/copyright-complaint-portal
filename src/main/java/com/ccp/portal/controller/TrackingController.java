@@ -1,7 +1,9 @@
 package com.ccp.portal.controller;
 
 import com.ccp.portal.model.Complaint;
+import com.ccp.portal.model.Review;
 import com.ccp.portal.repository.ComplaintRepository;
+import com.ccp.portal.repository.ReviewRepository;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,12 +14,14 @@ import org.springframework.web.bind.annotation.*;
 public class TrackingController {
 
     private final ComplaintRepository complaintRepository;
+    private final ReviewRepository reviewRepository;
 
     public TrackingController(
-            ComplaintRepository complaintRepository) {
+            ComplaintRepository complaintRepository,
+            ReviewRepository reviewRepository) {
 
-        this.complaintRepository =
-                complaintRepository;
+        this.complaintRepository = complaintRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     @GetMapping("/track")
@@ -36,9 +40,7 @@ public class TrackingController {
 
         Complaint complaint =
                 complaintRepository
-                        .findByComplaintNumber(
-                                normalizedNumber
-                        )
+                        .findByComplaintNumber(normalizedNumber)
                         .orElse(null);
 
         if (complaint == null) {
@@ -56,6 +58,21 @@ public class TrackingController {
                 "complaint",
                 complaint
         );
+
+        Review review =
+                reviewRepository
+                        .findTopByComplaintOrderByReviewedAtDesc(
+                                complaint
+                        )
+                        .orElse(null);
+
+        if (review != null) {
+
+            model.addAttribute(
+                    "review",
+                    review
+            );
+        }
 
         return "track";
     }
