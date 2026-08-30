@@ -82,6 +82,13 @@ pipeline {
 
                         echo.
                         echo Application deployment command completed.
+                        echo.
+                        echo Checking deployed JAR...
+                        dir "C:\JenkinsDeploy\copyright-complaint-portal"
+
+                        echo.
+                        echo Checking Java processes...
+                        tasklist | findstr /I "java.exe"
                     '''
                 }
             }
@@ -95,18 +102,33 @@ pipeline {
 
                 bat '''
                     echo Waiting for application to start...
-                    timeout /t 15 /nobreak >nul
+                    set ATTEMPT=1
 
-                    echo Checking application health...
+                    :CHECK
 
-                    curl --fail http://localhost:%APP_PORT%/actuator/health
+                    echo Health check attempt %ATTEMPT% of 12...
 
-                    if errorlevel 1 (
-                        echo Application health check FAILED
-                        exit /b 1
-                    ) else (
-                        echo Application health check PASSED
+                    curl --fail --silent http://localhost:%APP_PORT%/actuator/health
+
+                    if not errorlevel 1 (
+                        echo.
+                        echo ========================================
+                        echo APPLICATION HEALTH CHECK PASSED
+                        echo ========================================
+                        exit /b 0
                     )
+
+                    if %ATTEMPT% GEQ 12 (
+                        echo.
+                        echo ========================================
+                        echo APPLICATION HEALTH CHECK FAILED
+                        echo ========================================
+                        xit /b 1
+                    )
+
+                    set /a ATTEMPT+=1
+                    timeout /t 5 /nobreak >nul
+                    goto CHECK
                 '''
 
             }
