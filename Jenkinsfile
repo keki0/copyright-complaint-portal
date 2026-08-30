@@ -99,10 +99,14 @@ pipeline {
 
                     echo Checking application health...
 
-                    powershell -NoProfile -Command "$r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing -TimeoutSec 10; Write-Host ('HTTP Status: ' + $r.StatusCode); Write-Host $r.Content; if ($r.StatusCode -ne 200) { exit 1 }"
+                    curl --fail http://localhost:%APP_PORT%/actuator/health
 
-                    echo.
-                    echo Application health check passed.
+                    if errorlevel 1 (
+                        echo Application health check FAILED
+                        exit /b 1
+                    ) else (
+                        echo Application health check PASSED
+                    )
                 '''
 
             }
