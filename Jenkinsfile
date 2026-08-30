@@ -80,7 +80,9 @@ pipeline {
                         echo.
                         echo Starting application on port %APP_PORT%...
 
-                        start "CopyrightComplaintPortal" /MIN cmd /c "set DB_USERNAME=%DB_USERNAME%&& set DB_PASSWORD=%DB_PASSWORD%&& java -jar C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar --server.port=%APP_PORT%"
+                        set "JENKINS_NODE_COOKIE=dontKillMe"
+
+                        start "CopyrightComplaintPortal" /MIN cmd /c "set DB_USERNAME=%DB_USERNAME%&& set DB_PASSWORD=%DB_PASSWORD%&& java -jar C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar --server.port=%APP_PORT% > C:\\JenkinsDeploy\\copyright-complaint-portal\\application.log 2>&1"
 
                         echo.
                         echo Application deployment command completed.
