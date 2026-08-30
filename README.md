@@ -113,3 +113,24 @@ bugfix/duplicate-tracking-mapping
 hotfix/database-connection
 
 release/v1.0.0
+
+## Project Backlog
+
+### Completed
+
+- [x] Complaint request submission
+- [x] Document and data validation
+- [x] Document storage
+- [x] Reviewer action
+- [x] Complaint approval/rejection
+- [x] Complaint status tracking
+- [x] Git feature branching
+- [x] Pull Request and code review
+- [x] Merge conflict creation and resolution
+- [x] Release-ready MVP baseline
+
+### Next
+
+- [ ] Jenkins Continuous Integration
+- [ ] Jenkins Pipeline as Code
+- [ ] Application deployment
