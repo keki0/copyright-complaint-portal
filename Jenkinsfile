@@ -68,17 +68,31 @@ pipeline {
                     bat '''
                         if not exist "C:\\JenkinsDeploy\\copyright-complaint-portal" mkdir "C:\\JenkinsDeploy\\copyright-complaint-portal"
 
-                        echo Copying application JAR...
+                        echo.
+                        echo ========================================
+                        echo COPYING APPLICATION JAR
+                        echo ========================================
 
                         copy /Y "target\\copyright-complaint-portal-0.0.1-SNAPSHOT.jar" "C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar"
 
                         echo.
-                        echo Stopping previous application instance...
+                        echo ========================================
+                        echo STOPPING APPLICATION ON PORT %APP_PORT%
+                        echo ========================================
 
-                        taskkill /F /FI "WINDOWTITLE eq CopyrightComplaintPortal" >nul 2>&1
+                        for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%APP_PORT% ^| findstr LISTENING') do (
+                            echo Stopping process %%a using port %APP_PORT%...
+                            taskkill /F /PID %%a
+                        )
 
                         echo.
-                        echo Starting application on port %APP_PORT%...
+                        echo Waiting for port to become available...
+                        timeout /t 3 /nobreak >nul
+
+                        echo.
+                        echo ========================================
+                        echo STARTING APPLICATION
+                        echo ========================================
 
                         set "JENKINS_NODE_COOKIE=dontKillMe"
 
@@ -88,12 +102,16 @@ pipeline {
                         echo Application deployment command completed.
 
                         echo.
-                        echo Checking deployed JAR...
+                        echo ========================================
+                        echo DEPLOYED FILE
+                        echo ========================================
 
                         dir "C:\\JenkinsDeploy\\copyright-complaint-portal"
 
                         echo.
-                        echo Checking Java process...
+                        echo ========================================
+                        echo JAVA PROCESSES
+                        echo ========================================
 
                         tasklist | findstr /I "java.exe"
                     '''
