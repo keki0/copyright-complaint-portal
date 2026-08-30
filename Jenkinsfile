@@ -58,24 +58,32 @@ pipeline {
                 echo 'DEPLOY STAGE'
                 echo '========================================'
 
-                bat '''
-                if not exist "C:\\JenkinsDeploy\\copyright-complaint-portal" mkdir "C:\\JenkinsDeploy\\copyright-complaint-portal"
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'mysql-credentials',
+                        usernameVariable: 'DB_USERNAME',
+                        passwordVariable: 'DB_PASSWORD'
+                    )
+                ]) {
+                    bat '''
+                        if not exist "C:\\JenkinsDeploy\\copyright-complaint-portal" mkdir "C:\\JenkinsDeploy\\copyright-complaint-portal"
 
-                echo Copying application JAR...
-                copy /Y "target\\copyright-complaint-portal-0.0.1-SNAPSHOT.jar" "C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar"
+                        echo Copying application JAR...
+                        copy /Y "target\\copyright-complaint-portal-0.0.1-SNAPSHOT.jar" "C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar"
 
-                echo.
-                echo Stopping previous application instance...
-                taskkill /F /FI "WINDOWTITLE eq CopyrightComplaintPortal" >nul 2>&1
+                        echo.
+                        echo Stopping previous application instance...
+                        taskkill /F /FI "WINDOWTITLE eq CopyrightComplaintPortal" >nul 2>&1
 
-                echo.
-                echo Starting application on port %APP_PORT%...
+                        echo.
+                        echo Starting application on port %APP_PORT%...
 
-                start "CopyrightComplaintPortal" /MIN cmd /c "java -jar C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar --server.port=%APP_PORT%"
+                        start "CopyrightComplaintPortal" /MIN cmd /c "set DB_USERNAME=%DB_USERNAME%&& set DB_PASSWORD=%DB_PASSWORD%&& java -jar C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar --server.port=%APP_PORT%"
 
-                echo.
-                echo Application deployment command completed.
-                '''
+                        echo.
+                        echo Application deployment command completed.
+                        '''
+                }
             }
         }
 
@@ -85,16 +93,33 @@ pipeline {
                 echo 'VERIFY DEPLOYMENT'
                 echo '========================================'
 
-                bat '''
-                powershell -Command "Start-Sleep -Seconds 10"
-
-                echo Checking application endpoint...
-
-                powershell -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing; Write-Host ('HTTP Status: ' + $r.StatusCode); Write-Host $r.Content } catch { Write-Host 'Application health check failed'; exit 1 }"
-                '''
+                bat """
+                    powershell -Command ^
+                    "\$success = \$false; ^
+                    for (\$i = 1; \$i -le 12; \$i++) { ^
+                        Write-Host ('Health check attempt ' + \$i + ' of 12'); ^
+                        try { ^
+                            \$r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing -TimeoutSec 5; ^
+                            Write-Host ('HTTP Status: ' + \$r.StatusCode); ^
+                            Write-Host \$r.Content; ^
+                            if (\$r.StatusCode -eq 200) { ^
+                                \$success = \$true; ^
+                                break ^
+                            } ^
+                        } catch { ^
+                            Write-Host 'Application not ready yet...'; ^
+                        } ^
+                        Start-Sleep -Seconds 5 ^
+                    }; ^
+                    if (-not \$success) { ^
+                        Write-Host 'Application health check failed after 12 attempts'; ^
+                        exit 1 ^
+                    } else { ^
+                        Write-Host 'Application health check passed'; ^
+                    }"
+                """
             }
         }
-    }
 
     post {
         success {
