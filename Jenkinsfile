@@ -59,24 +59,22 @@ pipeline {
                 echo '========================================'
 
                 bat '''
-                    if not exist "%DEPLOY_DIR%" mkdir "%DEPLOY_DIR%"
+                if not exist "C:\\JenkinsDeploy\\copyright-complaint-portal" mkdir "C:\\JenkinsDeploy\\copyright-complaint-portal"
 
-                    echo Copying application JAR...
+                echo Copying application JAR...
+                copy /Y "target\\copyright-complaint-portal-0.0.1-SNAPSHOT.jar" "C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar"
 
-                    copy /Y "target\\%APP_NAME%-0.0.1-SNAPSHOT.jar" "%DEPLOY_DIR%\\%APP_NAME%.jar"
+                echo.
+                echo Stopping previous application instance...
+                taskkill /F /FI "WINDOWTITLE eq CopyrightComplaintPortal" >nul 2>&1
 
-                    echo.
-                    echo Stopping previous application instance...
+                echo.
+                echo Starting application on port %APP_PORT%...
 
-                    taskkill /F /FI "WINDOWTITLE eq CopyrightComplaintPortal" >nul 2>&1
+                start "CopyrightComplaintPortal" /MIN cmd /c "java -jar C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar --server.port=%APP_PORT%"
 
-                    echo.
-                    echo Starting application on port %APP_PORT%...
-
-                    start "CopyrightComplaintPortal" /MIN cmd /c "java -jar \"%DEPLOY_DIR%\\%APP_NAME%.jar\" --server.port=%APP_PORT%"
-
-                    echo.
-                    echo Application deployment command completed.
+                echo.
+                echo Application deployment command completed.
                 '''
             }
         }
@@ -88,11 +86,11 @@ pipeline {
                 echo '========================================'
 
                 bat '''
-                    timeout /t 10 /nobreak >nul
+                powershell -Command "Start-Sleep -Seconds 10"
 
-                    echo Checking application endpoint...
+                echo Checking application endpoint...
 
-                    powershell -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing; Write-Host ('HTTP Status: ' + $r.StatusCode); Write-Host $r.Content } catch { Write-Host 'Application health check failed'; exit 1 }"
+                powershell -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing; Write-Host ('HTTP Status: ' + $r.StatusCode); Write-Host $r.Content } catch { Write-Host 'Application health check failed'; exit 1 }"
                 '''
             }
         }
