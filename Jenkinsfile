@@ -69,10 +69,12 @@ pipeline {
                         if not exist "C:\\JenkinsDeploy\\copyright-complaint-portal" mkdir "C:\\JenkinsDeploy\\copyright-complaint-portal"
 
                         echo Copying application JAR...
+
                         copy /Y "target\\copyright-complaint-portal-0.0.1-SNAPSHOT.jar" "C:\\JenkinsDeploy\\copyright-complaint-portal\\copyright-complaint-portal.jar"
 
                         echo.
                         echo Stopping previous application instance...
+
                         taskkill /F /FI "WINDOWTITLE eq CopyrightComplaintPortal" >nul 2>&1
 
                         echo.
@@ -82,12 +84,15 @@ pipeline {
 
                         echo.
                         echo Application deployment command completed.
-                        echo.
-                        echo Checking deployed JAR...
-                        dir "C:\JenkinsDeploy\copyright-complaint-portal"
 
                         echo.
-                        echo Checking Java processes...
+                        echo Checking deployed JAR...
+
+                        dir "C:\\JenkinsDeploy\\copyright-complaint-portal"
+
+                        echo.
+                        echo Checking Java process...
+
                         tasklist | findstr /I "java.exe"
                     '''
                 }
@@ -102,6 +107,7 @@ pipeline {
 
                 bat '''
                     echo Waiting for application to start...
+
                     set ATTEMPT=1
 
                     :CHECK
@@ -123,14 +129,15 @@ pipeline {
                         echo ========================================
                         echo APPLICATION HEALTH CHECK FAILED
                         echo ========================================
-                        xit /b 1
+                        exit /b 1
                     )
 
                     set /a ATTEMPT+=1
+
                     timeout /t 5 /nobreak >nul
+
                     goto CHECK
                 '''
-
             }
         }
     }
