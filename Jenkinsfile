@@ -94,30 +94,17 @@ pipeline {
                 echo '========================================'
 
                 bat '''
-                    powershell -Command ^
-                    "$success = $false; ^
-                    for ($i = 1; $i -le 12; $i++) { ^
-                        Write-Host ('Health check attempt ' + $i + ' of 12'); ^
-                        try { ^
-                            $r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing -TimeoutSec 5; ^
-                            Write-Host ('HTTP Status: ' + $r.StatusCode); ^
-                            Write-Host $r.Content; ^
-                            if ($r.StatusCode -eq 200) { ^
-                                $success = $true; ^
-                                break; ^
-                            } ^
-                        } catch { ^
-                            Write-Host 'Application not ready yet...'; ^
-                        } ^
-                        Start-Sleep -Seconds 5 ^
-                    }; ^
-                    if (-not $success) { ^
-                        Write-Host 'Application health check failed after 12 attempts'; ^
-                        exit 1 ^
-                    } else { ^
-                        Write-Host 'Application health check passed'; ^
-                    }"
+                    echo Waiting for application to start...
+                    timeout /t 15 /nobreak >nul
+
+                    echo Checking application health...
+
+                    powershell -NoProfile -Command "$r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing -TimeoutSec 10; Write-Host ('HTTP Status: ' + $r.StatusCode); Write-Host $r.Content; if ($r.StatusCode -ne 200) { exit 1 }"
+
+                    echo.
+                    echo Application health check passed.
                 '''
+
             }
         }
     }
