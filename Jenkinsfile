@@ -47,7 +47,6 @@ pipeline {
                 echo '========================================'
 
                 bat 'call mvn package -DskipTests'
-
                 bat 'dir target'
             }
         }
@@ -65,6 +64,7 @@ pipeline {
                         passwordVariable: 'DB_PASSWORD'
                     )
                 ]) {
+
                     bat '''
                         if not exist "C:\\JenkinsDeploy\\copyright-complaint-portal" mkdir "C:\\JenkinsDeploy\\copyright-complaint-portal"
 
@@ -82,7 +82,7 @@ pipeline {
 
                         echo.
                         echo Application deployment command completed.
-                        '''
+                    '''
                 }
             }
         }
@@ -93,33 +93,34 @@ pipeline {
                 echo 'VERIFY DEPLOYMENT'
                 echo '========================================'
 
-                bat """
+                bat '''
                     powershell -Command ^
-                    "\$success = \$false; ^
-                    for (\$i = 1; \$i -le 12; \$i++) { ^
-                        Write-Host ('Health check attempt ' + \$i + ' of 12'); ^
+                    "$success = $false; ^
+                    for ($i = 1; $i -le 12; $i++) { ^
+                        Write-Host ('Health check attempt ' + $i + ' of 12'); ^
                         try { ^
-                            \$r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing -TimeoutSec 5; ^
-                            Write-Host ('HTTP Status: ' + \$r.StatusCode); ^
-                            Write-Host \$r.Content; ^
-                            if (\$r.StatusCode -eq 200) { ^
-                                \$success = \$true; ^
-                                break ^
+                            $r = Invoke-WebRequest -Uri 'http://localhost:%APP_PORT%/actuator/health' -UseBasicParsing -TimeoutSec 5; ^
+                            Write-Host ('HTTP Status: ' + $r.StatusCode); ^
+                            Write-Host $r.Content; ^
+                            if ($r.StatusCode -eq 200) { ^
+                                $success = $true; ^
+                                break; ^
                             } ^
                         } catch { ^
                             Write-Host 'Application not ready yet...'; ^
                         } ^
                         Start-Sleep -Seconds 5 ^
                     }; ^
-                    if (-not \$success) { ^
+                    if (-not $success) { ^
                         Write-Host 'Application health check failed after 12 attempts'; ^
                         exit 1 ^
                     } else { ^
                         Write-Host 'Application health check passed'; ^
                     }"
-                """
+                '''
             }
         }
+    }
 
     post {
         success {
