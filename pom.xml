@@ -50,6 +50,19 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+		<dependency>
+    		<groupId>org.seleniumhq.selenium</groupId>
+    		<artifactId>selenium-java</artifactId>
+    		<version>4.35.0</version>
+    		<scope>test</scope>
+		</dependency>
+
+		<dependency>
+    		<groupId>org.junit.jupiter</groupId>
+    		<artifactId>junit-jupiter</artifactId>
+    		<version>5.13.4</version>
+    		<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -135,6 +148,19 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+    			<groupId>org.apache.maven.plugins</groupId>
+    			<artifactId>maven-surefire-plugin</artifactId>
+    			<version>3.5.6</version>
+    			<configuration>
+        			<includes>
+            			<include>**/*Test.java</include>
+        			</includes>
+        			<systemPropertyVariables>
+            			<webdriver.chrome.silentOutput>true</webdriver.chrome.silentOutput>
+        			</systemPropertyVariables>
+    			</configuration>
 			</plugin>
 		</plugins>
 	</build>
