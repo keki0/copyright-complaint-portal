@@ -21,7 +21,7 @@ public class HomePageTest extends BaseSeleniumTest {
 
         assertTrue(
                 driver.getPageSource()
-                        .contains("This Heading Is Incorrect"),
+                        .contains("Protect Your Creative Work"),
                 "Home page should contain main heading"
         );
 
