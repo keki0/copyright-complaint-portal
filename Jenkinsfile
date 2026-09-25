@@ -106,7 +106,7 @@ pipeline {
                     )
 
                     set /a ATTEMPT+=1
-                    timeout /t 5 /nobreak >nul
+                    powershell -NoProfile -Command "Start-Sleep -Seconds 5"
                     goto CHECK
                 '''
             }
@@ -143,12 +143,9 @@ pipeline {
                 echo 'STOPPING TEMPORARY TEST INSTANCE'
 
                 bat '''
-                    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%TEST_PORT% ^| findstr LISTENING') do (
-                        echo Stopping test process %%a
-                        taskkill /F /PID %%a
-                    )
+                powershell -NoProfile -Command "$pids = Get-NetTCPConnection -LocalPort %TEST_PORT% -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; foreach ($processId in $pids) { Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue }"
 
-                    echo Test instance cleanup completed.
+                echo Test instance cleanup completed.
                 '''
             }
         }
@@ -215,7 +212,7 @@ pipeline {
                     )
 
                     set /a ATTEMPT+=1
-                    timeout /t 5 /nobreak >nul
+                    powershell -NoProfile -Command "Start-Sleep -Seconds 5"
                     goto CHECK
                 '''
             }
