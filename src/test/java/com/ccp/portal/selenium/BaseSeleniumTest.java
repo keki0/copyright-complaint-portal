@@ -1,16 +1,16 @@
 
 package com.ccp.portal.selenium;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.extension.TestExecutionExceptionHandler;
+import org.junit.jupiter.api.extension.TestWatcher;
 
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,42 +24,76 @@ public class BaseSeleniumTest {
     protected WebDriver driver;
 
     protected static final String BASE_URL =
-            "http://localhost:8081";
+            System.getProperty(
+                    "selenium.baseUrl",
+                    "http://localhost:8081"
+            );
 
     @BeforeEach
     public void setUp() {
 
-        driver = new ChromeDriver();
+        ChromeOptions options = new ChromeOptions();
+
+        options.setBinary(
+                "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        );
+
+        boolean headless = Boolean.parseBoolean(
+                System.getProperty("selenium.headless", "false")
+        );
+
+        if (headless) {
+            options.addArguments("--headless=new");
+        }
+
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+
+        driver = new ChromeDriver(options);
 
         driver.manage().window().maximize();
 
         driver.get(BASE_URL);
     }
 
-    @AfterEach
-    public void tearDown() {
-
-        if (driver != null) {
-            driver.quit();
-        }
-    }
-
     @RegisterExtension
-    ScreenshotOnFailure screenshotExtension =
-            new ScreenshotOnFailure();
-
-    private class ScreenshotOnFailure
-            implements TestExecutionExceptionHandler {
+    TestWatcher screenshotWatcher = new TestWatcher() {
 
         @Override
-        public void handleTestExecutionException(
+        public void testSuccessful(
+                ExtensionContext context) {
+
+            closeBrowser();
+        }
+
+        @Override
+        public void testFailed(
                 ExtensionContext context,
-                Throwable cause) throws Throwable {
+                Throwable cause) {
 
             takeScreenshot(context);
+            closeBrowser();
+        }
 
-            // Preserve the original test failure
-            throw cause;
+        @Override
+        public void testAborted(
+                ExtensionContext context,
+                Throwable cause) {
+
+            closeBrowser();
+        }
+    };
+
+    private void closeBrowser() {
+
+        if (driver != null) {
+            try {
+                driver.quit();
+            } finally {
+                driver = null;
+            }
         }
     }
 
@@ -78,10 +112,7 @@ public class BaseSeleniumTest {
                             .orElse("UnknownTest")
                     + "_"
                     + context.getDisplayName()
-                            .replaceAll(
-                                    "[^a-zA-Z0-9.-]",
-                                    "_"
-                            );
+                            .replaceAll("[^a-zA-Z0-9.-]", "_");
 
             Path screenshotDir =
                     Paths.get("test-screenshots");
@@ -93,9 +124,7 @@ public class BaseSeleniumTest {
                             .getScreenshotAs(OutputType.FILE);
 
             Path destination =
-                    screenshotDir.resolve(
-                            testName + ".png"
-                    );
+                    screenshotDir.resolve(testName + ".png");
 
             Files.copy(
                     screenshot.toPath(),
