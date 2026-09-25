@@ -61,12 +61,13 @@ pipeline {
 
                         echo Checking whether test port is already in use...
 
-                        for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%TEST_PORT% ^| findstr LISTENING') do (
-                            echo Stopping previous test process %%a
-                            taskkill /F /PID %%a
-                        )
+                        echo Checking whether test port is already in use...
 
-                        timeout /t 3 /nobreak >nul
+                        powershell -NoProfile -Command "$pids = Get-NetTCPConnection -LocalPort %TEST_PORT% -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; foreach ($processId in $pids) { if ($processId -ne $PID) { Write-Host ('Stopping process ' + $processId); Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue } }"
+
+                        echo Waiting for port to become available...
+
+                        powershell -NoProfile -Command "Start-Sleep -Seconds 3"
 
                         echo Starting test application...
 
@@ -171,14 +172,11 @@ pipeline {
 
                         copy /Y "target\\copyright-complaint-portal-0.0.1-SNAPSHOT.jar" "%DEPLOY_DIR%\\copyright-complaint-portal.jar"
 
-                        echo STOPPING APPLICATION ON PORT %APP_PORT%
+                        echo STOPPING APPLICATION ON PORT %APP_PORT%...
 
-                        for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%APP_PORT% ^| findstr LISTENING') do (
-                            echo Stopping process %%a
-                            taskkill /F /PID %%a
-                        )
+                        powershell -NoProfile -Command "$pids = Get-NetTCPConnection -LocalPort %APP_PORT% -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique; foreach ($processId in $pids) { if ($processId -ne $PID) { Write-Host ('Stopping process ' + $processId); Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue } }"
 
-                        timeout /t 3 /nobreak >nul
+                        powershell -NoProfile -Command "Start-Sleep -Seconds 3"
 
                         echo STARTING FINAL APPLICATION
 
