@@ -48,3 +48,5 @@ uploads/*
 # OS files
 .DS_Store
 Thumbs.dbcms
+
+.env.docker

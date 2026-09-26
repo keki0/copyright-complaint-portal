@@ -1,0 +1,9 @@
+.git
+.github
+target
+test-screenshots
+uploads
+.idea
+.vscode
+*.log
+.env.docker
