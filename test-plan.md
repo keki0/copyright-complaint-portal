@@ -18,19 +18,33 @@ To validate the critical user journeys of the Copyright Complaint Portal using S
 
 ### Test Cases
 
-| Test ID | User Journey | Test Data | Expected Result |
+Since v1.1.0 the portal requires login, so tests register their own complainant
+accounts and use the seeded reviewer account (`-Dselenium.reviewerEmail`,
+`-Dselenium.reviewerPassword`).
+
+| Test ID | Class | User Journey | Expected Result |
 |---|---|---|---|
-| TC01 | Open portal | localhost:8081 | Homepage loads successfully |
-| TC02 | Open Submit Complaint | None | Complaint form is displayed |
-| TC03 | Validate complaint form | Empty mandatory fields | Browser validation prevents invalid submission |
-| TC04 | Track invalid complaint | CCP-INVALID-999999 | Invalid complaint does not display complaint details |
-| TC05 | Track valid complaint | Valid complaint ID | Complaint details and status timeline are displayed |
+| TC01 | HomePageTest | Open portal | Homepage loads with title, heading and Submit option |
+| TC02 | HomePageTest | Visitor navigation | Login and Register links are shown |
+| TC03 | AuthenticationTest | Open reviewer page while logged out | Redirected to the login page |
+| TC04 | AuthenticationTest | Login with wrong password | Error shown, user stays on login page |
+| TC05 | AuthenticationTest | Register and log in | User lands on My Complaints with role COMPLAINANT |
+| TC06 | AuthenticationTest | Complainant opens reviewer dashboard | Access Denied (403) page |
+| TC07 | AuthenticationTest | Reviewer logs in | Lands on Reviewer Dashboard |
+| TC08 | AuthenticationTest | Logout | Session ends; protected pages redirect to login |
+| TC09 | SubmitComplaintTest | Open complaint form | Fields required; applicant email read-only from account |
+| TC10 | SubmitComplaintTest | Empty complaint form | Browser validation prevents submission |
+| TC11 | TrackComplaintTest | Track invalid complaint | Error message displayed |
+| TC12 | ComplaintWorkflowTest | Submit -> review -> approve -> track | Other complainant cannot see it; owner sees APPROVED, remarks and history |
+| UT01-06 | DocumentValidationServiceTest | Unit tests | Real PDF/PNG accepted; renamed, unsupported, empty and oversized files rejected |
 
 ### Assertions
 
 The Selenium tests verify:
 
 1. Portal title and homepage content.
+1. Login, logout, registration and role-based access control.
+1. End-to-end complaint workflow across complainant and reviewer roles.
 2. Submit Complaint page availability.
 3. Applicant and copyright sections.
 4. Track Complaint page availability.

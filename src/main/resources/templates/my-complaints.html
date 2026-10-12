@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Complaints')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h2 class="mb-0">My Complaints</h2>
+            <p class="text-muted mb-0">
+                Welcome, <span th:text="${currentUser.name}">User</span>.
+                Every complaint filed from your account is listed here.
+            </p>
+        </div>
+        <a th:href="@{/complaint/new}" class="btn btn-primary">+ New Complaint</a>
+    </div>
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card"><div class="stat-value" th:text="${totalCount}">0</div><div>Total</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card"><div class="stat-value text-warning" th:text="${openCount}">0</div><div>In progress</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card"><div class="stat-value text-success" th:text="${approvedCount}">0</div><div>Approved</div></div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card"><div class="stat-value text-danger" th:text="${rejectedCount}">0</div><div>Rejected</div></div>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(complaints)}" class="alert alert-info" id="no-complaints">
+        You have not submitted any complaints yet.
+        <a th:href="@{/complaint/new}">Submit your first complaint</a>.
+    </div>
+
+    <div th:unless="${#lists.isEmpty(complaints)}" class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="my-complaints-table">
+                <thead class="table-dark">
+                <tr>
+                    <th>Complaint ID</th>
+                    <th>Work</th>
+                    <th>Type</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="complaint : ${complaints}">
+                    <td><strong th:text="${complaint.complaintNumber}"></strong></td>
+                    <td th:text="${complaint.workTitle}"></td>
+                    <td th:text="${complaint.copyrightType}"></td>
+                    <td th:text="${#temporals.format(complaint.submittedAt, 'dd MMM yyyy HH:mm')}"></td>
+                    <td><span th:replace="~{fragments/layout :: statusBadge(${complaint.status})}"></span></td>
+                    <td>
+                        <a class="btn btn-outline-primary btn-sm"
+                           th:href="@{/complaint/track(id=${complaint.complaintNumber})}">View</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

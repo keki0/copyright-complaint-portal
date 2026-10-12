@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Manage Users')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container py-5">
+
+    <h2>Administration</h2>
+    <p class="text-muted">Manage portal accounts and roles.</p>
+
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <!-- Overview -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2">
+            <div class="stat-card"><div class="stat-value" th:text="${complainantCount}">0</div><div>Complainants</div></div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="stat-card"><div class="stat-value" th:text="${reviewerCount}">0</div><div>Reviewers</div></div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="stat-card"><div class="stat-value" th:text="${adminCount}">0</div><div>Admins</div></div>
+        </div>
+        <div class="col-6 col-md-3" th:each="entry : ${counts}" th:if="${entry.key.name() == 'SUBMITTED' or entry.key.name() == 'UNDER_REVIEW'}">
+            <div class="stat-card">
+                <div class="stat-value text-warning" th:text="${entry.value}">0</div>
+                <div th:text="${#strings.replace(entry.key.name(), '_', ' ')} + ' complaints'">STATUS</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- Create account -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="mb-3">Create Staff Account</h5>
+
+                    <form th:action="@{/admin/users}" th:object="${createUserRequest}" method="post"
+                          id="create-user-form" novalidate>
+
+                        <div class="mb-2">
+                            <label class="form-label" for="name">Name</label>
+                            <input type="text" th:field="*{name}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" required>
+                            <div class="invalid-feedback" th:errors="*{name}"></div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label" for="email">Email</label>
+                            <input type="email" th:field="*{email}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'" required>
+                            <div class="invalid-feedback" th:errors="*{email}"></div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label" for="password">Initial Password</label>
+                            <input type="password" th:field="*{password}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                                   autocomplete="new-password" required>
+                            <div class="invalid-feedback" th:errors="*{password}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="role">Role</label>
+                            <select th:field="*{role}" class="form-select">
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">ROLE</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Create Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- User list -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle" id="users-table">
+                        <thead class="table-dark">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="user : ${users}">
+                            <td th:text="${user.name}"></td>
+                            <td class="small" th:text="${user.email}"></td>
+                            <td>
+                                <span th:if="${user.id == currentUser.id}"
+                                      class="badge bg-dark" th:text="${user.role} + ' (you)'"></span>
+                                <form th:unless="${user.id == currentUser.id}"
+                                      th:action="@{/admin/users/{id}/role(id=${user.id})}" method="post"
+                                      class="d-flex gap-1">
+                                    <select name="role" class="form-select form-select-sm">
+                                        <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"
+                                                th:selected="${r == user.role}">ROLE</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-dark">Save</button>
+                                </form>
+                            </td>
+                            <td>
+                                <span th:if="${user.disabled}" class="badge bg-danger">Disabled</span>
+                                <span th:if="${!user.disabled and !user.hasUsablePassword()}"
+                                      class="badge bg-secondary" title="Created before accounts existed">Unclaimed</span>
+                                <span th:if="${!user.disabled and user.hasUsablePassword()}"
+                                      class="badge bg-success">Active</span>
+                            </td>
+                            <td>
+                                <form th:unless="${user.id == currentUser.id}"
+                                      th:action="@{/admin/users/{id}/toggle(id=${user.id})}" method="post"
+                                      onsubmit="return confirm('Change the status of this account?');">
+                                    <button type="submit" class="btn btn-sm"
+                                            th:classappend="${user.disabled} ? 'btn-outline-success' : 'btn-outline-danger'"
+                                            th:text="${user.disabled} ? 'Enable' : 'Disable'">Disable</button>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

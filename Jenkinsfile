@@ -54,6 +54,16 @@ pipeline {
                         credentialsId: 'mysql-credentials',
                         usernameVariable: 'DB_USERNAME',
                         passwordVariable: 'DB_PASSWORD'
+                    ),
+                    usernamePassword(
+                        credentialsId: 'portal-admin-credentials',
+                        usernameVariable: 'APP_ADMIN_EMAIL',
+                        passwordVariable: 'APP_ADMIN_PASSWORD'
+                    ),
+                    usernamePassword(
+                        credentialsId: 'portal-reviewer-credentials',
+                        usernameVariable: 'APP_REVIEWER_EMAIL',
+                        passwordVariable: 'APP_REVIEWER_PASSWORD'
                     )
                 ]) {
                     bat '''
@@ -66,6 +76,9 @@ pipeline {
                         powershell -NoProfile -Command "Start-Sleep -Seconds 3"
 
                         set "JENKINS_NODE_COOKIE=dontKillMe"
+
+                        rem APP_ADMIN_* and APP_REVIEWER_* are inherited from withCredentials,
+                        rem so the test instance seeds the same accounts Selenium logs in with.
 
                         start "CCP-Test" /MIN cmd /c "set DB_USERNAME=%DB_USERNAME%&& set DB_PASSWORD=%DB_PASSWORD%&& java -jar %DEPLOY_DIR%\\copyright-complaint-portal.jar --server.port=%TEST_PORT% > %DEPLOY_DIR%\\test-application.log 2>&1"
 
@@ -110,9 +123,17 @@ pipeline {
             steps {
                 echo 'RUNNING SELENIUM UI TESTS'
 
-                bat '''
-                    call mvn test -Dselenium.headless=true -Dselenium.baseUrl=http://localhost:%TEST_PORT%
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'portal-reviewer-credentials',
+                        usernameVariable: 'APP_REVIEWER_EMAIL',
+                        passwordVariable: 'APP_REVIEWER_PASSWORD'
+                    )
+                ]) {
+                    bat '''
+                        call mvn test -Dselenium.headless=true -Dselenium.baseUrl=http://localhost:%TEST_PORT% "-Dselenium.reviewerEmail=%APP_REVIEWER_EMAIL%" "-Dselenium.reviewerPassword=%APP_REVIEWER_PASSWORD%"
+                    '''
+                }
             }
 
             post {
@@ -220,6 +241,16 @@ pipeline {
                         credentialsId: 'mysql-credentials',
                         usernameVariable: 'DB_USERNAME',
                         passwordVariable: 'DB_PASSWORD'
+                    ),
+                    usernamePassword(
+                        credentialsId: 'portal-admin-credentials',
+                        usernameVariable: 'APP_ADMIN_EMAIL',
+                        passwordVariable: 'APP_ADMIN_PASSWORD'
+                    ),
+                    usernamePassword(
+                        credentialsId: 'portal-reviewer-credentials',
+                        usernameVariable: 'APP_REVIEWER_EMAIL',
+                        passwordVariable: 'APP_REVIEWER_PASSWORD'
                     )
                 ]) {
                     bat '''
@@ -249,7 +280,7 @@ pipeline {
 
                         echo Creating temporary Docker environment file...
 
-                        powershell -NoProfile -Command "$content = 'DB_USERNAME=' + $env:DB_USERNAME + [Environment]::NewLine + 'DB_PASSWORD=' + $env:DB_PASSWORD + [Environment]::NewLine + 'DB_URL=jdbc:mysql://host.docker.internal:3306/copyright_portal' + [Environment]::NewLine + 'SERVER_PORT=8081'; [System.IO.File]::WriteAllText($env:ENV_FILE, $content, [System.Text.Encoding]::ASCII)"
+                        powershell -NoProfile -Command "$content = 'DB_USERNAME=' + $env:DB_USERNAME + [Environment]::NewLine + 'DB_PASSWORD=' + $env:DB_PASSWORD + [Environment]::NewLine + 'DB_URL=jdbc:mysql://host.docker.internal:3306/copyright_portal' + [Environment]::NewLine + 'SERVER_PORT=8081' + [Environment]::NewLine + 'APP_ADMIN_EMAIL=' + $env:APP_ADMIN_EMAIL + [Environment]::NewLine + 'APP_ADMIN_PASSWORD=' + $env:APP_ADMIN_PASSWORD + [Environment]::NewLine + 'APP_REVIEWER_EMAIL=' + $env:APP_REVIEWER_EMAIL + [Environment]::NewLine + 'APP_REVIEWER_PASSWORD=' + $env:APP_REVIEWER_PASSWORD; [System.IO.File]::WriteAllText($env:ENV_FILE, $content, [System.Text.Encoding]::ASCII)"
 
                         if errorlevel 1 exit /b 1
 
@@ -318,7 +349,7 @@ pipeline {
     post {
         success {
             echo 'PIPELINE SUCCESSFUL'
-            echo 'Selenium tests passed, Docker image published, and Docker container deployed.'
+            echo 'Unit and Selenium tests (including login and role checks) passed, Docker image published, and Docker container deployed.'
         }
 
         failure {

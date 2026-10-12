@@ -27,6 +27,12 @@ body {
     transform: translateY(-5px);
 }
 
+/* Forms and tables should not jump on hover */
+.card:has(form):hover,
+.card:has(table):hover {
+    transform: none;
+}
+
 footer {
     margin-top: 40px;
 }
@@ -75,4 +81,45 @@ footer {
 .status-step.completed .status-icon {
     background-color: #198754;
     color: white;
+}
+
+/* ---------- Authentication & dashboards ---------- */
+
+.stat-card {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+}
+
+.role-card {
+    background: #fff;
+    border-left: 4px solid #0d6efd;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.status-badge {
+    letter-spacing: 0.02em;
+}
+
+.preserve-lines {
+    white-space: pre-line;
+}
+
+.navbar .nav-link {
+    white-space: nowrap;
 }

@@ -1,9 +1,12 @@
 package com.ccp.portal.controller;
 
+import com.ccp.portal.exception.ResourceNotFoundException;
 import com.ccp.portal.model.Complaint;
-import com.ccp.portal.model.Review;
-import com.ccp.portal.repository.ComplaintRepository;
+import com.ccp.portal.model.User;
 import com.ccp.portal.repository.ReviewRepository;
+import com.ccp.portal.security.CurrentUserService;
+import com.ccp.portal.service.ComplaintHistoryService;
+import com.ccp.portal.service.ComplaintService;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,66 +16,63 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/complaint")
 public class TrackingController {
 
-    private final ComplaintRepository complaintRepository;
+    private final ComplaintService complaintService;
     private final ReviewRepository reviewRepository;
+    private final ComplaintHistoryService historyService;
+    private final CurrentUserService currentUserService;
 
     public TrackingController(
-            ComplaintRepository complaintRepository,
-            ReviewRepository reviewRepository) {
+            ComplaintService complaintService,
+            ReviewRepository reviewRepository,
+            ComplaintHistoryService historyService,
+            CurrentUserService currentUserService) {
 
-        this.complaintRepository = complaintRepository;
+        this.complaintService = complaintService;
         this.reviewRepository = reviewRepository;
+        this.historyService = historyService;
+        this.currentUserService = currentUserService;
     }
 
+    /** GET /complaint/track            -> empty search form
+     *  GET /complaint/track?id=CCP-...  -> result (used by "My complaints" links) */
     @GetMapping("/track")
-    public String trackingPage() {
-
-        return "track";
-    }
-
-    @PostMapping("/track")
-    public String trackComplaint(
-            @RequestParam String complaintNumber,
+    public String trackingPage(
+            @RequestParam(value = "id", required = false) String complaintNumber,
             Model model) {
 
-        String normalizedNumber =
-                complaintNumber.trim().toUpperCase();
-
-        Complaint complaint =
-                complaintRepository
-                        .findByComplaintNumber(normalizedNumber)
-                        .orElse(null);
-
-        if (complaint == null) {
-
-            model.addAttribute(
-                    "error",
-                    "No complaint was found with ID: "
-                            + normalizedNumber
-            );
-
+        if (complaintNumber == null || complaintNumber.isBlank()) {
             return "track";
         }
 
-        model.addAttribute(
-                "complaint",
-                complaint
-        );
+        return showComplaint(complaintNumber, model);
+    }
 
-        Review review =
-                reviewRepository
-                        .findTopByComplaintOrderByReviewedAtDesc(
-                                complaint
-                        )
-                        .orElse(null);
+    @PostMapping("/track")
+    public String trackComplaint(@RequestParam String complaintNumber, Model model) {
+        return showComplaint(complaintNumber, model);
+    }
 
-        if (review != null) {
+    private String showComplaint(String complaintNumber, Model model) {
 
-            model.addAttribute(
-                    "review",
-                    review
-            );
+        User viewer = currentUserService.requireCurrentUser();
+        model.addAttribute("searchedNumber", complaintNumber.trim().toUpperCase());
+
+        Complaint complaint;
+
+        try {
+            complaint = complaintService.getComplaintForViewer(complaintNumber, viewer);
+        } catch (ResourceNotFoundException e) {
+            model.addAttribute("error", e.getMessage());
+            return "track";
         }
+
+        model.addAttribute("complaint", complaint);
+        model.addAttribute("documents", complaintService.getDocuments(complaint));
+        model.addAttribute("history", historyService.getHistory(complaint));
+
+        reviewRepository
+                .findTopByComplaintOrderByReviewedAtDesc(complaint)
+                .ifPresent(review -> model.addAttribute("review", review));
 
         return "track";
     }

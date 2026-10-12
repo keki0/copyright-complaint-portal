@@ -1,0 +1,29 @@
+---
+app_name: copyright-complaint-portal
+app_user: appuser
+ansible_user_name: ansible
+
+app_root: /opt/copyright-portal
+release_dir: /opt/copyright-portal/releases
+app_config_dir: /etc/copyright-portal
+app_log_dir: /var/log/copyright-portal
+
+app_port: 8081
+ssh_port: 22
+mysql_port: 3306
+
+docker_container_name: ccp-provisioned-container
+docker_image: ketakipatil/copyright-complaint-portal:build-17
+
+required_packages:
+  - python3
+  - openssh-server
+  - curl
+  - ca-certificates
+  - docker.io
+
+required_directories:
+  - /opt/copyright-portal
+  - /opt/copyright-portal/releases
+  - /etc/copyright-portal
+  - /var/log/copyright-portal

@@ -20,17 +20,34 @@ The project is developed as a 15-week DevOps implementation covering:
 - Automated provisioning
 - Deployment and rollback
 
-## Core MVP Workflow
+## Roles and Security (v1.1.0)
 
-1. Complainant submits a copyright complaint.
-2. Application validates complaint data.
-3. Supporting document is validated.
-4. Valid documents are stored securely.
-5. Complaint receives a unique complaint ID.
-6. Reviewer views pending complaints.
-7. Reviewer approves or rejects the complaint.
-8. Complaint status is updated.
-9. Complainant tracks complaint status.
+| Role | Main pages |
+|---|---|
+| Complainant | `/register`, `/complaint/my`, `/complaint/new`, `/complaint/track` |
+| Reviewer | `/reviewer/dashboard`, `/reviewer/complaint/{id}` |
+| Admin | `/admin/users` + everything a reviewer can do |
+
+Spring Security form login, BCrypt password hashing, role-based URL and method
+security, ownership checks on complaints and documents, CSRF protection on every
+form. Development accounts: `admin@copyrightportal.com / Admin@12345` and
+`reviewer@copyrightportal.com / Reviewer@12345` (override with `APP_ADMIN_*` /
+`APP_REVIEWER_*` environment variables).
+
+Full details: [docs/Authentication-and-Authorization.md](docs/Authentication-and-Authorization.md)
+
+## Core Workflow
+
+1. Complainant registers and logs in.
+2. Complainant submits a copyright complaint.
+3. Application validates complaint data.
+4. Supporting document is validated (type, size and file signature).
+5. Valid documents are stored securely.
+6. Complaint receives a unique complaint ID.
+7. Reviewer views pending complaints and starts a review (complaint is assigned).
+8. Assigned reviewer approves or rejects the complaint with remarks.
+9. Every status change is recorded in the audit trail.
+10. Complainant tracks complaint status from "My Complaints".
 
 ## Technology Stack
 
@@ -38,6 +55,7 @@ The project is developed as a 15-week DevOps implementation covering:
 |---|---|
 | Language | Java 21 |
 | Framework | Spring Boot |
+| Security | Spring Security (form login, BCrypt, RBAC, CSRF) |
 | Build Tool | Maven |
 | Database | MySQL 8 |
 | ORM | Spring Data JPA / Hibernate |
@@ -129,8 +147,15 @@ release/v1.0.0
 - [x] Merge conflict creation and resolution
 - [x] Release-ready MVP baseline
 
+- [x] Jenkins Continuous Integration and Pipeline as Code
+- [x] Selenium continuous testing
+- [x] Docker image and Jenkins-Docker deployment
+- [x] Ansible configuration management and provisioning
+- [x] Authentication and role-based authorization (v1.1.0)
+- [x] Complainant dashboard, reviewer assignment, status audit trail, admin user management (v1.1.0)
+
 ### Next
 
-- [ ] Jenkins Continuous Integration
-- [ ] Jenkins Pipeline as Code
-- [ ] Application deployment
+- [ ] E-mail notifications on status change
+- [ ] Docker Compose for application + MySQL
+- [ ] Object storage for uploaded documents

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Register')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card shadow">
+                <div class="card-body p-4">
+
+                    <h2 class="mb-1">Create Account</h2>
+                    <p class="text-muted mb-4">
+                        Register as a complainant to submit and track copyright complaints.
+                        If you filed a complaint before accounts existed, register with the
+                        same email to see it in your dashboard.
+                    </p>
+
+                    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+                    <form th:action="@{/register}" th:object="${registrationRequest}" method="post"
+                          id="register-form" novalidate>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="name">Full Name</label>
+                            <input type="text" th:field="*{name}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'" required>
+                            <div class="invalid-feedback" th:errors="*{name}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="email">Email Address</label>
+                            <input type="email" th:field="*{email}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'"
+                                   autocomplete="username" required>
+                            <div class="invalid-feedback" th:errors="*{email}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="password">Password</label>
+                            <input type="password" th:field="*{password}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'"
+                                   autocomplete="new-password" minlength="8" required>
+                            <div class="form-text">At least 8 characters, including a letter and a number.</div>
+                            <div class="invalid-feedback" th:errors="*{password}"></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="confirmPassword">Confirm Password</label>
+                            <input type="password" th:field="*{confirmPassword}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid'"
+                                   autocomplete="new-password" required>
+                            <div class="invalid-feedback" th:errors="*{confirmPassword}"></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100" id="register-btn">Create Account</button>
+                    </form>
+
+                    <p class="text-center mt-4 mb-0">
+                        Already registered? <a th:href="@{/login}">Log in</a>
+                    </p>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -25,6 +25,14 @@ public class Complaint {
     @JoinColumn(name = "complainant_id", nullable = false)
     private User complainant;
 
+    /**
+     * Reviewer who claimed the complaint with "Start review".
+     * Only this reviewer (or an ADMIN) may record the final decision.
+     */
+    @ManyToOne
+    @JoinColumn(name = "assigned_reviewer_id")
+    private User assignedReviewer;
+
     @Column(nullable = false)
     private String workTitle;
 
@@ -44,6 +52,22 @@ public class Complaint {
     private LocalDateTime submittedAt;
 
     private LocalDateTime updatedAt;
+
+    public boolean isFinalized() {
+        return status == Status.APPROVED || status == Status.REJECTED;
+    }
+
+    public boolean isOwnedBy(User user) {
+        return user != null
+                && complainant != null
+                && complainant.getId().equals(user.getId());
+    }
+
+    public boolean isAssignedTo(User user) {
+        return user != null
+                && assignedReviewer != null
+                && assignedReviewer.getId().equals(user.getId());
+    }
 
     public enum Status {
         SUBMITTED,

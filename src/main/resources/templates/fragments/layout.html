@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<!-- Shared <head>: usage  <head th:replace="~{fragments/layout :: head('Page title')}"></head> -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} + ' | Copyright Complaint Portal'">Copyright Complaint Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+
+<body>
+
+<!-- Role-aware navigation bar -->
+<nav th:fragment="navbar" class="navbar navbar-expand navbar-dark bg-dark">
+    <div class="container flex-wrap">
+
+        <a class="navbar-brand fw-bold" th:href="@{/}">Copyright Complaint Portal</a>
+
+        <ul class="navbar-nav me-auto flex-wrap">
+
+            <th:block th:if="${currentUser != null and currentUser.role.name() == 'COMPLAINANT'}">
+                <li class="nav-item"><a class="nav-link" th:href="@{/complaint/my}">My Complaints</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/complaint/new}">Submit Complaint</a></li>
+            </th:block>
+
+            <th:block th:if="${currentUser != null and currentUser.staff}">
+                <li class="nav-item"><a class="nav-link" th:href="@{/reviewer/dashboard}">Reviewer Dashboard</a></li>
+            </th:block>
+
+            <th:block th:if="${currentUser != null and currentUser.role.name() == 'ADMIN'}">
+                <li class="nav-item"><a class="nav-link" th:href="@{/admin/users}">Manage Users</a></li>
+            </th:block>
+
+            <li class="nav-item" th:if="${currentUser != null}">
+                <a class="nav-link" th:href="@{/complaint/track}">Track</a>
+            </li>
+        </ul>
+
+        <div class="d-flex align-items-center gap-2" th:if="${currentUser == null}">
+            <a th:href="@{/login}" class="btn btn-outline-light btn-sm" id="nav-login">Login</a>
+            <a th:href="@{/register}" class="btn btn-light btn-sm" id="nav-register">Register</a>
+        </div>
+
+        <div class="d-flex align-items-center gap-2" th:if="${currentUser != null}">
+            <a th:href="@{/account}" class="text-white text-decoration-none small">
+                <span id="nav-user" th:text="${currentUser.email}">user@example.com</span>
+                <span class="badge bg-secondary ms-1" id="nav-role"
+                      th:text="${currentUser.role}">ROLE</span>
+            </a>
+            <form th:action="@{/logout}" method="post" class="m-0">
+                <button type="submit" class="btn btn-outline-light btn-sm" id="logout-btn">Logout</button>
+            </form>
+        </div>
+
+    </div>
+</nav>
+
+<!-- Flash / page messages -->
+<div th:fragment="alerts">
+    <div th:if="${success}" class="alert alert-success" role="alert" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+</div>
+
+<!-- Coloured status badge: th:replace="~{fragments/layout :: statusBadge(${complaint.status})}" -->
+<span th:fragment="statusBadge(status)"
+      class="badge status-badge"
+      th:classappend="${status.name() == 'SUBMITTED'} ? 'bg-primary'
+                      : (${status.name() == 'UNDER_REVIEW'} ? 'bg-warning text-dark'
+                      : (${status.name() == 'APPROVED'} ? 'bg-success' : 'bg-danger'))"
+      th:text="${#strings.replace(status.name(), '_', ' ')}">STATUS</span>
+
+<!-- Audit trail table -->
+<div th:fragment="history(history)">
+    <h5 class="mt-4">Status History</h5>
+    <p th:if="${#lists.isEmpty(history)}" class="text-muted small mb-0">
+        No status changes have been recorded for this complaint yet.
+    </p>
+    <div class="table-responsive" th:unless="${#lists.isEmpty(history)}">
+        <table class="table table-sm align-middle mb-0" id="history-table">
+            <thead>
+            <tr>
+                <th>When</th>
+                <th>Status</th>
+                <th>By</th>
+                <th>Note</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry : ${history}">
+                <td class="text-nowrap" th:text="${#temporals.format(entry.changedAt, 'dd MMM yyyy HH:mm')}"></td>
+                <td><span th:replace="~{fragments/layout :: statusBadge(${entry.toStatus})}"></span></td>
+                <td th:text="${entry.changedBy != null ? entry.changedBy.name : 'System'}"></td>
+                <td class="small" th:text="${entry.note}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Supporting document links (download goes through the access check) -->
+<div th:fragment="documents(documents)">
+    <h5 class="mt-4">Supporting Documents</h5>
+    <p th:if="${#lists.isEmpty(documents)}" class="text-muted small mb-0">No documents uploaded.</p>
+    <ul class="list-group" th:unless="${#lists.isEmpty(documents)}">
+        <li class="list-group-item d-flex justify-content-between align-items-center"
+            th:each="doc : ${documents}">
+            <span>
+                <span th:text="${doc.fileName}">evidence.pdf</span>
+                <small class="text-muted ms-2"
+                       th:text="${#numbers.formatDecimal(doc.fileSize / 1024.0, 1, 1)} + ' KB'"></small>
+            </span>
+            <a class="btn btn-outline-primary btn-sm document-download"
+               th:href="@{/documents/{id}/download(id=${doc.id})}">Download</a>
+        </li>
+    </ul>
+</div>
+
+<footer th:fragment="footer" class="bg-dark text-white text-center py-4">
+    <p class="mb-0">Copyright Complaint Portal &copy; 2026</p>
+</footer>
+
+</body>
+</html>

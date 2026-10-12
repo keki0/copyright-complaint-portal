@@ -1,33 +1,31 @@
 package com.ccp.portal.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Complaint form data. The complainant's name and e-mail are no longer
+ * typed into the form: they are taken from the logged-in account, so a
+ * user cannot file a complaint in someone else's name.
+ */
 @Getter
 @Setter
 public class ComplaintRequest {
 
-    @NotBlank(message = "Name is required")
-    private String name;
-
-    @NotBlank(message = "Email is required")
-    @Email(message = "Enter a valid email")
-    private String email;
-
     @NotBlank(message = "Work title is required")
+    @Size(max = 255, message = "Work title must not exceed 255 characters")
     private String workTitle;
 
     @NotBlank(message = "Copyright type is required")
     private String copyrightType;
 
     @NotBlank(message = "Description is required")
-    @Size(min = 20, message = "Description must contain at least 20 characters")
+    @Size(min = 20, max = 2000, message = "Description must contain 20 to 2000 characters")
     private String description;
 
     @NotBlank(message = "Infringement details are required")
-    @Size(min = 20, message = "Infringement details must contain at least 20 characters")
+    @Size(min = 20, max = 3000, message = "Infringement details must contain 20 to 3000 characters")
     private String infringementDetails;
 }

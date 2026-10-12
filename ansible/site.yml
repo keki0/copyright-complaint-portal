@@ -1,0 +1,90 @@
+---
+- name: Configure Copyright Complaint Portal target
+  hosts: portal
+  become: true
+  gather_facts: true
+
+  vars:
+    app_user: appuser
+    ansible_user_name: ansible
+
+  tasks:
+    - name: Update apt package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required server packages
+      ansible.builtin.apt:
+        name:
+          - python3
+          - curl
+          - ca-certificates
+          - openssh-server
+          - docker.io
+        state: present
+
+    - name: Ensure application service user exists
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        shell: /usr/sbin/nologin
+        create_home: false
+        state: present
+
+    - name: Ensure application directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+      loop:
+        - /opt/copyright-portal
+        - /opt/copyright-portal/releases
+        - /var/log/copyright-portal
+
+    - name: Ensure application configuration directory exists
+      ansible.builtin.file:
+        path: /etc/copyright-portal
+        state: directory
+        owner: root
+        group: root
+        mode: "0750"
+
+    - name: Ensure application environment placeholder exists
+      ansible.builtin.copy:
+        dest: /etc/copyright-portal/application.env
+        content: |
+          # Runtime configuration is supplied during deployment.
+          SERVER_PORT=8081
+        owner: root
+        group: root
+        mode: "0640"
+
+    - name: Ensure SSH runtime directory exists
+      ansible.builtin.file:
+        path: /run/sshd
+        state: directory
+        mode: "0755"
+
+    - name: Verify application directory
+      ansible.builtin.stat:
+        path: /opt/copyright-portal
+      register: app_directory
+
+    - name: Confirm application directory exists
+      ansible.builtin.assert:
+        that:
+          - app_directory.stat.exists
+          - app_directory.stat.isdir
+        success_msg: "Application directory is configured."
+        fail_msg: "Application directory configuration failed."
+
+    - name: Display target configuration summary
+      ansible.builtin.debug:
+        msg:
+          - "Target OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Application user: {{ app_user }}"
+          - "Application port: 8081"
+          - "MySQL port: 3306"
+          - "Docker runtime is provided by the Docker Desktop host."

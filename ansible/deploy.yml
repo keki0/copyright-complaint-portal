@@ -1,0 +1,72 @@
+---
+- name: Deploy Copyright Complaint Portal
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    container_name: ccp-provisioned-container
+    image_name: ketakipatil/copyright-complaint-portal:build-17
+    health_url: http://localhost:8081/actuator/health
+
+  tasks:
+    - name: Check whether deployment container exists
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - "{{ container_name }}"
+      register: container_check
+      changed_when: false
+      failed_when: false
+
+    - name: Create application container if missing
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - -d
+          - --name
+          - "{{ container_name }}"
+          - --env-file
+          - "{{ playbook_dir }}/../.env.docker"
+          - -p
+          - "8081:8081"
+          - "{{ image_name }}"
+      when: container_check.rc != 0
+
+    - name: Check whether application container is running
+      ansible.builtin.command:
+        argv:
+          - docker
+          - inspect
+          - --format
+          - "{{ '{{' }}.State.Running{{ '}}' }}"
+          - "{{ container_name }}"
+      register: running_check
+      changed_when: false
+      when: container_check.rc == 0
+
+    - name: Start application container only when stopped
+      ansible.builtin.command:
+        argv:
+          - docker
+          - start
+          - "{{ container_name }}"
+      when:
+        - container_check.rc == 0
+        - running_check.stdout | trim != "true"
+
+    - name: Wait for application health endpoint
+      ansible.builtin.uri:
+        url: "{{ health_url }}"
+        status_code: 200
+        return_content: true
+      register: health_result
+      until: health_result.status == 200 and health_result.json.status == "UP"
+      retries: 15
+      delay: 5
+
+    - name: Display deployment health
+      ansible.builtin.debug:
+        msg: "Application health: {{ health_result.json.status }}"
